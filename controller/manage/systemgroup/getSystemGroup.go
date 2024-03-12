@@ -1,0 +1,26 @@
+package systemgroup
+
+import (
+	"cms/db/models"
+	code "cms/package/error"
+	"cms/package/response"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+)
+
+func GetSystemGroup(c *gin.Context) {
+	userList, err := models.GetSystemGroupList()
+	if err != nil {
+		response.CustomErrorResponse(
+			c,
+			http.StatusInternalServerError,
+			map[string]string{code.SERVER_ERROR: err.Error()},
+		)
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"list": userList,
+	})
+}
