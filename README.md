@@ -1,29 +1,27 @@
-# README #
+# CMS-api
 
-This README would normally document whatever steps are necessary to get your application up and running.
+## 概要
+自作CMSのバックエンドリポジトリです。  
+[フロントはこちら](https://github.com/aoisora2983/cms-front)
 
-### What is this repository for? ###
+## 使用技術一覧
+<img src="https://img.shields.io/badge/Go-00ADD8?logo=Go&logoColor=white&style=for-the-badge">
+<img src="https://img.shields.io/badge/postgresql-4169e1?style=for-the-badge&logo=postgresql&logoColor=white">
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+## Setup
 
-### How do I get set up? ###
+インストール
+```sh
+go mod tidy
+```
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
+## 本番
 
-### Contribution guidelines ###
+本番ビルド:
 
-* Writing tests
-* Code review
-* Other guidelines
+```bash
+go build main.go
+```
 
-### Who do I talk to? ###
-
-* Repo owner or admin
-* Other community or team contact
+## このCMSで作成したサイト
+<a href="https://awatana.com/" target="_blank">https://awatana.com/</a>
