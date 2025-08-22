@@ -4,9 +4,12 @@ import (
 	"cms/package/auth"
 	code "cms/package/error"
 	"cms/package/response"
+	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func JWT() gin.HandlerFunc {
@@ -23,7 +26,6 @@ func JWT() gin.HandlerFunc {
 				subject, err := auth.Verify(token)
 				if err != nil {
 					isOk = false
-
 				} else {
 					isOk = true
 					c.Set("userId", subject)
@@ -32,6 +34,9 @@ func JWT() gin.HandlerFunc {
 		}
 
 		if !isOk {
+			if errors.Is(err, jwt.ErrTokenExpired) || errors.Is(err, jwt.ErrTokenNotValidYet) {
+				fmt.Println("Timing is everything")
+			}
 
 			response.CustomErrorResponse(
 				c,
