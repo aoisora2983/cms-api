@@ -10,10 +10,12 @@ import (
 	"cms/controller/manage/portfolio"
 	"cms/controller/manage/systemgroup"
 	"cms/controller/manage/user"
+	"cms/controller/view"
 	openArticle "cms/controller/view/article"
 	"cms/controller/view/comment"
 	"cms/controller/view/opinion"
 	openPortfolio "cms/controller/view/portfolio"
+	"cms/controller/view/tool"
 	"cms/middleware"
 	"cms/package/validation"
 	"log/slog"
@@ -131,9 +133,11 @@ func main() {
 		}
 
 		// 利用者向け画面
-		view := api.Group("/view")
+		views := api.Group("/view")
 		{
-			article := view.Group("/article")
+			views.POST("/img/upload", view.ImgUpload) // 画像アップロード
+
+			article := views.Group("/article")
 			{
 				article.GET("/", openArticle.GetOpenArticle)          // ページ情報
 				article.POST("/list", openArticle.GetOpenArticleList) // ページ一覧情報
@@ -146,15 +150,20 @@ func main() {
 				article.GET("/tag", openArticle.GetTag) // タグ取得
 			}
 
-			portfolios := view.Group("/portfolio")
+			portfolios := views.Group("/portfolio")
 			{
 				portfolios.GET("/")                                         // ポートフォリオ情報
 				portfolios.GET("/list", openPortfolio.GetOpenPortfolioList) // ポートフォリオ情報一覧
 			}
 
-			opinions := view.Group("/opinion")
+			opinions := views.Group("/opinion")
 			{
 				opinions.POST("/post", opinion.PostOpinion) // お問合せ送信
+			}
+
+			tools := views.Group("/tool")
+			{
+				tools.POST("/qr", tool.GetQr) // QRコード生成
 			}
 		}
 	}

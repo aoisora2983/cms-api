@@ -52,4 +52,4 @@ Thumbs.db
 .env
 
 # upload files
-upload/
+upload/*
