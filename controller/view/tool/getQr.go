@@ -27,6 +27,8 @@ const (
 
 	EXTENSION_JPG = 1
 	EXTENSION_PNG = 2
+
+	DEFAULT_PADING = 80
 )
 
 /**
@@ -48,8 +50,27 @@ func GetQr(c *gin.Context) {
 		return
 	}
 
+	// --- エンコード
+	qrc, err := qrcode.NewWith(req.Content)
+	if err != nil {
+		response.CustomErrorResponse(
+			c,
+			http.StatusBadRequest,
+			map[string]string{code.SERVER_ERROR: err.Error()},
+		)
+		return
+	}
+
 	// --- option設定
 	options := []standard.ImageOption{}
+
+	// ------ 画像サイズ設定
+	// 必要なサイズから指定のサイズに一番近いサイズを設定(解像度が悪くなるのを防ぐため)
+	width := req.QrWidth - DEFAULT_PADING
+	dimension := qrc.Dimension()
+	nearQRWidth := width / dimension
+
+	options = append(options, standard.WithQRWidth(uint8(nearQRWidth)))
 
 	// ------ フォーマット(jpg pr png)
 	// ※ フォーマットがjpgモードでも透過設定があったりロゴ画像がPNGならPNGで保存される
@@ -71,6 +92,41 @@ func GetQr(c *gin.Context) {
 		// PNG or JPG
 		_extension := strings.ToLower(filepath.Ext(logopath))
 		filepath := fmt.Sprintf("%s/user/upload/%s", ProjectRoot(), logopath)
+
+		// ロゴ画像に使用できる画像サイズを算出してリサイズする
+		realWidth := (nearQRWidth * dimension) + DEFAULT_PADING
+		availableLogoWidth := realWidth / 5
+
+		// ロゴ画像のwidth, height取得
+		logoWidth, logoHeight, err := getFileSize(filepath)
+		if err != nil {
+			response.CustomErrorResponse(
+				c,
+				http.StatusBadRequest,
+				map[string]string{code.SERVER_ERROR: err.Error()},
+			)
+			return
+		}
+
+		// 制限を超えていたらリサイズ
+		if logoWidth >= availableLogoWidth || logoHeight >= availableLogoWidth {
+			resizeWidth := availableLogoWidth
+			resizeHeight := availableLogoWidth
+			// 縦横の長さを測って長い方に合わせてリサイズ
+			if logoWidth > logoHeight {
+				resizeHeight = int(
+					float32(logoHeight) *
+						float32(float32(availableLogoWidth)/float32(logoWidth)),
+				)
+			} else {
+				resizeWidth = int(
+					float32(logoWidth) *
+						float32(float32(availableLogoWidth)/float32(logoHeight)),
+				)
+			}
+
+			ResizeImage(filepath, _extension, resizeWidth, resizeHeight)
+		}
 
 		if _, err := os.Stat(filepath); os.IsNotExist(err) {
 			response.CustomErrorResponse(
@@ -151,9 +207,6 @@ func GetQr(c *gin.Context) {
 	}
 
 	// --- QRコード作成
-	// ------ エンコード
-	qrc, err := qrcode.New(req.Content)
-
 	// ------ 画像作成
 	guid := xid.New().String()
 	filename := fmt.Sprintf("/upload/download/%s", guid+extension)
@@ -186,7 +239,7 @@ func GetQr(c *gin.Context) {
 
 	// ------ 画像サイズ設定があればリサイズ
 	if req.QrWidth > 0 {
-		err := ResizeImage(filepath, extension, req.QrWidth)
+		err := ResizeImage(filepath, extension, req.QrWidth, req.QrWidth)
 		if err != nil {
 			response.CustomErrorResponse(
 				c,
@@ -248,7 +301,24 @@ func ProjectRoot() string {
 	return currentDir
 }
 
-func ResizeImage(filepath string, extension string, size int) error {
+func getFileSize(filepath string) (int, int, error) {
+	file, err := os.Open(filepath)
+	if err != nil {
+		return 0, 0, err
+	}
+	defer file.Close()
+
+	img, _, err := image.Decode(file)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	bound := img.Bounds()
+
+	return bound.Dx(), bound.Dy(), nil
+}
+
+func ResizeImage(filepath string, extension string, width, height int) error {
 	originFile, err := os.Open(filepath)
 	if err != nil {
 		return err
@@ -266,7 +336,7 @@ func ResizeImage(filepath string, extension string, size int) error {
 		return err
 	}
 
-	newImage := image.NewRGBA(image.Rect(0, 0, size, size))
+	newImage := image.NewRGBA(image.Rect(0, 0, width, height))
 	draw.BiLinear.Scale(newImage, newImage.Bounds(), img, img.Bounds(), draw.Over, nil)
 
 	newFile, err := os.Create(filepath)
