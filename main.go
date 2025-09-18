@@ -83,7 +83,6 @@ func main() {
 				blog.POST("/article/delete", article.DeleteArticle)     // 記事削除
 
 				// タグ関係
-				blog.GET("/tag/get/list", article.GetTagList)   // タグ一覧取得
 				blog.POST("/tag/register", article.RegisterTag) // タグ登録
 				blog.POST("/tag/delete", article.DeleteTag)     // タグ削除
 
@@ -137,17 +136,18 @@ func main() {
 		{
 			views.POST("/img/upload", view.ImgUpload) // 画像アップロード
 
-			article := views.Group("/article")
+			articles := views.Group("/article")
 			{
-				article.GET("/", openArticle.GetOpenArticle)          // ページ情報
-				article.POST("/list", openArticle.GetOpenArticleList) // ページ一覧情報
+				articles.GET("/", openArticle.GetOpenArticle)          // ページ情報
+				articles.POST("/list", openArticle.GetOpenArticleList) // ページ一覧情報
 
-				article.GET("/count/good", openArticle.CountUpArticleGood) // goodボタン押下
+				articles.GET("/count/good", openArticle.CountUpArticleGood) // goodボタン押下
 
-				article.POST("/comment", comment.PostComment)                  // コメント投稿
-				article.GET("/comment/count/good", comment.CountUpCommentGood) // コメントgoodボタン押下
+				articles.POST("/comment", comment.PostComment)                  // コメント投稿
+				articles.GET("/comment/count/good", comment.CountUpCommentGood) // コメントgoodボタン押下
 
-				article.GET("/tag", openArticle.GetTag) // タグ取得
+				articles.GET("/tag", openArticle.GetTag)      // タグ取得
+				articles.GET("/tag/list", article.GetTagList) // タグ一覧取得
 			}
 
 			portfolios := views.Group("/portfolio")
