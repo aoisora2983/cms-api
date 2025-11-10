@@ -3,9 +3,8 @@ package article
 import (
 	"cms/constant"
 	"cms/db/models"
-	code "cms/package/error"
+	"cms/package/helper"
 	"cms/package/request"
-	"cms/package/response"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -13,27 +12,14 @@ import (
 
 func GetArticle(c *gin.Context) {
 	var req request.GetArticleRequest
-	if err := c.Bind(&req); err != nil {
-		if validErr, ok := err.(response.ValidationError); ok {
-			c.JSON(validErr.GetStatus(), validErr.GetResponse())
-			return
-		}
-
-		response.CustomErrorResponse(
-			c,
-			http.StatusBadRequest,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+	if !helper.BindQuery(c, &req) {
 		return
 	}
 
 	content, err := models.GetBlogContent(req.Id, req.IdBranch, false)
 	if err != nil {
-		response.CustomErrorResponse(
-			c,
-			http.StatusInternalServerError,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+		helper.HandleError(c, err, http.StatusInternalServerError)
+		return
 	}
 	// statusを読める形に変換
 	status := int(content["status"].(int16))
@@ -48,11 +34,7 @@ func GetArticle(c *gin.Context) {
 	// タグ取得
 	blogTags, err := models.GetBlogTags(content["id"].(int32), content["id_branch"].(int32))
 	if err != nil {
-		response.CustomErrorResponse(
-			c,
-			http.StatusInternalServerError,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+		helper.HandleError(c, err, http.StatusInternalServerError)
 		return
 	}
 	var tags []map[string]interface{}

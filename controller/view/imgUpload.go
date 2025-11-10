@@ -1,8 +1,7 @@
 package view
 
 import (
-	code "cms/package/error"
-	"cms/package/response"
+	"cms/package/helper"
 	"fmt"
 	"io"
 	"net/http"
@@ -28,21 +27,13 @@ func ImgUpload(c *gin.Context) {
 	}
 
 	if err != nil {
-		response.CustomErrorResponse(
-			c,
-			http.StatusBadRequest,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+		helper.HandleError(c, err, http.StatusBadRequest)
 		return
 	}
 
 	src, err := file.Open()
 	if err != nil {
-		response.CustomErrorResponse(
-			c,
-			http.StatusBadRequest,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+		helper.HandleError(c, err, http.StatusBadRequest)
 		return
 	}
 
@@ -51,11 +42,7 @@ func ImgUpload(c *gin.Context) {
 	// MIMEタイプ検証
 	mimeType := file.Header.Get("Content-Type")
 	if err != nil && !ValidMIMEType(mimeType) {
-		response.CustomErrorResponse(
-			c,
-			http.StatusBadRequest,
-			map[string]string{code.SERVER_ERROR: "許可されたMIMETYPEではありません。"},
-		)
+		helper.HandleErrorWithMessage(c, "許可されたMIMETYPEではありません。", http.StatusBadRequest)
 		return
 	}
 
@@ -64,11 +51,7 @@ func ImgUpload(c *gin.Context) {
 
 	// 画像以外の拡張子はNG
 	if ValidExtension(extension) {
-		response.CustomErrorResponse(
-			c,
-			http.StatusBadRequest,
-			map[string]string{code.SERVER_ERROR: "許可された拡張子ではありません。"},
-		)
+		helper.HandleErrorWithMessage(c, "許可された拡張子ではありません。", http.StatusBadRequest)
 		return
 	}
 
@@ -79,26 +62,17 @@ func ImgUpload(c *gin.Context) {
 	filename := guid + extension
 	dst, err := os.Create(fmt.Sprintf("%s/user/upload/%s", ProjectRoot(), filename))
 	if err != nil {
-		response.CustomErrorResponse(
-			c,
-			http.StatusBadRequest,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+		helper.HandleError(c, err, http.StatusBadRequest)
 		return
 	}
 	defer dst.Close()
 
 	if _, err = io.Copy(dst, src); err != nil {
-
-		response.CustomErrorResponse(
-			c,
-			http.StatusBadRequest,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+		helper.HandleError(c, err, http.StatusBadRequest)
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
+	helper.CreatedResponse(c, gin.H{
 		"filename": filename,
 	})
 }

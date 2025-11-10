@@ -3,9 +3,8 @@ package article
 import (
 	"cms/constant"
 	"cms/db/models"
-	code "cms/package/error"
+	"cms/package/helper"
 	"cms/package/request"
-	"cms/package/response"
 	"net/http"
 	"time"
 
@@ -17,27 +16,13 @@ import (
  */
 func GetOpenArticle(c *gin.Context) {
 	var req request.GetOpenArticleRequest
-	if err := c.Bind(&req); err != nil {
-		if validErr, ok := err.(response.ValidationError); ok {
-			c.JSON(validErr.GetStatus(), validErr.GetResponse())
-			return
-		}
-
-		response.CustomErrorResponse(
-			c,
-			http.StatusBadRequest,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+	if !helper.BindQuery(c, &req) {
 		return
 	}
 
 	content, err := models.GetBlogContent(req.Id, -1, true)
 	if err != nil {
-		response.CustomErrorResponse(
-			c,
-			http.StatusInternalServerError,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+		helper.HandleError(c, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -46,11 +31,7 @@ func GetOpenArticle(c *gin.Context) {
 	// タグ取得
 	tags, err := getTagList(content)
 	if err != nil {
-		response.CustomErrorResponse(
-			c,
-			http.StatusInternalServerError,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+		helper.HandleError(c, err, http.StatusInternalServerError)
 		return
 	}
 	articleMap["tags"] = tags
@@ -58,11 +39,7 @@ func GetOpenArticle(c *gin.Context) {
 	// metaタグ取得
 	metaList, err := getMetaList(req.Id)
 	if err != nil {
-		response.CustomErrorResponse(
-			c,
-			http.StatusInternalServerError,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+		helper.HandleError(c, err, http.StatusInternalServerError)
 		return
 	}
 	articleMap["meta"] = metaList
@@ -70,18 +47,14 @@ func GetOpenArticle(c *gin.Context) {
 	// コメント取得
 	commentList, err := getCommentList(req.Id)
 	if err != nil {
-		response.CustomErrorResponse(
-			c,
-			http.StatusInternalServerError,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+		helper.HandleError(c, err, http.StatusInternalServerError)
 		return
 	}
 	articleMap["comments"] = commentList
 
 	articleMap["content"] = content
 
-	c.JSON(http.StatusCreated, articleMap)
+	helper.CreatedResponse(c, articleMap)
 }
 
 func getTagList(content map[string]interface{}) ([]models.Tag, error) {

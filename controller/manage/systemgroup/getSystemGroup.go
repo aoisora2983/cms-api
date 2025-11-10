@@ -2,8 +2,7 @@ package systemgroup
 
 import (
 	"cms/db/models"
-	code "cms/package/error"
-	"cms/package/response"
+	"cms/package/helper"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,15 +11,11 @@ import (
 func GetSystemGroup(c *gin.Context) {
 	userList, err := models.GetSystemGroupList()
 	if err != nil {
-		response.CustomErrorResponse(
-			c,
-			http.StatusInternalServerError,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+		helper.HandleError(c, err, http.StatusInternalServerError)
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
+	helper.CreatedResponse(c, gin.H{
 		"list": userList,
 	})
 }

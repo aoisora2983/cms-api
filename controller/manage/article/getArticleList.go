@@ -3,9 +3,8 @@ package article
 import (
 	"cms/constant"
 	"cms/db/models"
-	code "cms/package/error"
+	"cms/package/helper"
 	"cms/package/request"
-	"cms/package/response"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -13,17 +12,7 @@ import (
 
 func GetArticleList(c *gin.Context) {
 	var req request.GetArticleListRequest
-	if err := c.Bind(&req); err != nil {
-		if validErr, ok := err.(response.ValidationError); ok {
-			c.JSON(validErr.GetStatus(), validErr.GetResponse())
-			return
-		}
-
-		response.CustomErrorResponse(
-			c,
-			http.StatusBadRequest,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+	if !helper.BindQuery(c, &req) {
 		return
 	}
 
@@ -34,11 +23,7 @@ func GetArticleList(c *gin.Context) {
 
 	articleList, err := models.GetBlogContentList(param)
 	if err != nil {
-		response.CustomErrorResponse(
-			c,
-			http.StatusInternalServerError,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+		helper.HandleError(c, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -71,11 +56,7 @@ func GetArticleList(c *gin.Context) {
 		// タグ取得
 		blogTags, err := models.GetBlogTags(article["id"].(int32), article["id_branch"].(int32))
 		if err != nil {
-			response.CustomErrorResponse(
-				c,
-				http.StatusInternalServerError,
-				map[string]string{code.SERVER_ERROR: err.Error()},
-			)
+			helper.HandleError(c, err, http.StatusInternalServerError)
 			return
 		}
 
@@ -88,11 +69,7 @@ func GetArticleList(c *gin.Context) {
 
 			tags, err := models.GetTagListByIds(searchTags)
 			if err != nil {
-				response.CustomErrorResponse(
-					c,
-					http.StatusInternalServerError,
-					map[string]string{code.SERVER_ERROR: err.Error()},
-				)
+				helper.HandleError(c, err, http.StatusInternalServerError)
 				return
 			}
 			content["tags"] = tags
@@ -106,7 +83,7 @@ func GetArticleList(c *gin.Context) {
 		index++
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
+	helper.CreatedResponse(c, gin.H{
 		"articles": sortMap,
 		"total":    total,
 	})

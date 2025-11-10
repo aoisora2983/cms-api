@@ -1,7 +1,7 @@
 package portfolio
 
 import (
-	"net/http"
+	"cms/package/helper"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -31,8 +31,5 @@ func GetPortfolio(c *gin.Context) {
 	// 	return
 	// }
 
-	c.JSON(
-		http.StatusCreated,
-		portfolio,
-	)
+	helper.CreatedResponse(c, portfolio)
 }

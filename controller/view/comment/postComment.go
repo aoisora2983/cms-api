@@ -3,9 +3,8 @@ package comment
 import (
 	"cms/constant"
 	"cms/db/models"
-	code "cms/package/error"
+	"cms/package/helper"
 	"cms/package/request"
-	"cms/package/response"
 	"net/http"
 	"time"
 
@@ -17,17 +16,7 @@ import (
  */
 func PostComment(c *gin.Context) {
 	var req request.PostCommentRequest
-	if err := c.Bind(&req); err != nil {
-		if validErr, ok := err.(response.ValidationError); ok {
-			c.JSON(validErr.GetStatus(), validErr.GetResponse())
-			return
-		}
-
-		response.CustomErrorResponse(
-			c,
-			http.StatusBadRequest,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+	if !helper.BindQuery(c, &req) {
 		return
 	}
 
@@ -43,15 +32,9 @@ func PostComment(c *gin.Context) {
 
 	err := models.InsertComment(model)
 	if err != nil {
-		response.CustomErrorResponse(
-			c,
-			http.StatusBadRequest,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+		helper.HandleError(c, err, http.StatusBadRequest)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"status": "ok",
-	})
+	helper.OKResponse(c)
 }

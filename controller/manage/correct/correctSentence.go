@@ -4,9 +4,8 @@ import (
 	"cms/constant"
 	"cms/db/models"
 	pgCorrect "cms/package/correct"
-	code "cms/package/error"
+	"cms/package/helper"
 	"cms/package/request"
-	"cms/package/response"
 	"net/http"
 	"slices"
 	"strings"
@@ -19,17 +18,7 @@ import (
 func CorrectSentence(c *gin.Context) {
 	var req request.CorrectRequest
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		if validErr, ok := err.(response.ValidationError); ok {
-			c.JSON(validErr.GetStatus(), validErr.GetResponse())
-			return
-		}
-
-		response.CustomErrorResponse(
-			c,
-			http.StatusBadRequest,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+	if !helper.BindRequest(c, &req) {
 		return
 	}
 
@@ -38,11 +27,7 @@ func CorrectSentence(c *gin.Context) {
 	stringReader := strings.NewReader(string(sentence))
 	doc, err := goquery.NewDocumentFromReader(stringReader)
 	if err != nil {
-		response.CustomErrorResponse(
-			c,
-			http.StatusBadRequest,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+		helper.HandleError(c, err, http.StatusBadRequest)
 		return
 	}
 	// tooltip類は前回チェックが残っているだけなので削除しておく
@@ -52,11 +37,7 @@ func CorrectSentence(c *gin.Context) {
 
 	accessibilityList, err := models.GetAccessibilityList()
 	if err != nil {
-		response.CustomErrorResponse(
-			c,
-			http.StatusBadRequest,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+		helper.HandleError(c, err, http.StatusBadRequest)
 		return
 	}
 
@@ -83,10 +64,10 @@ func CorrectSentence(c *gin.Context) {
 				continue
 			}
 
-			c.JSON(http.StatusCreated, status.Response())
+			helper.CreatedResponse(c, status.Response())
 			return
 		}
 	}
 
-	c.JSON(http.StatusCreated, status.Response())
+	helper.CreatedResponse(c, status.Response())
 }

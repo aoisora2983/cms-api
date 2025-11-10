@@ -1,9 +1,8 @@
 package tool
 
 import (
-	code "cms/package/error"
+	"cms/package/helper"
 	"cms/package/request"
-	"cms/package/response"
 	"fmt"
 	"image"
 	"image/color"
@@ -36,28 +35,14 @@ const (
  */
 func GetQr(c *gin.Context) {
 	var req request.GetQrRequest
-	if err := c.Bind(&req); err != nil {
-		if validErr, ok := err.(response.ValidationError); ok {
-			c.JSON(validErr.GetStatus(), validErr.GetResponse())
-			return
-		}
-
-		response.CustomErrorResponse(
-			c,
-			http.StatusBadRequest,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+	if !helper.BindQuery(c, &req) {
 		return
 	}
 
 	// --- エンコード
 	qrc, err := qrcode.NewWith(req.Content)
 	if err != nil {
-		response.CustomErrorResponse(
-			c,
-			http.StatusBadRequest,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+		helper.HandleError(c, err, http.StatusBadRequest)
 		return
 	}
 
@@ -100,11 +85,7 @@ func GetQr(c *gin.Context) {
 		// ロゴ画像のwidth, height取得
 		logoWidth, logoHeight, err := getFileSize(filepath)
 		if err != nil {
-			response.CustomErrorResponse(
-				c,
-				http.StatusBadRequest,
-				map[string]string{code.SERVER_ERROR: err.Error()},
-			)
+			helper.HandleError(c, err, http.StatusBadRequest)
 			return
 		}
 
@@ -129,11 +110,7 @@ func GetQr(c *gin.Context) {
 		}
 
 		if _, err := os.Stat(filepath); os.IsNotExist(err) {
-			response.CustomErrorResponse(
-				c,
-				http.StatusBadRequest,
-				map[string]string{code.SERVER_ERROR: err.Error()},
-			)
+			helper.HandleError(c, err, http.StatusBadRequest)
 			return
 		}
 
@@ -151,11 +128,7 @@ func GetQr(c *gin.Context) {
 		filepath := fmt.Sprintf("%s/user/upload/%s", ProjectRoot(), halftonePath)
 
 		if _, err := os.Stat(filepath); os.IsNotExist(err) {
-			response.CustomErrorResponse(
-				c,
-				http.StatusBadRequest,
-				map[string]string{code.SERVER_ERROR: err.Error()},
-			)
+			helper.HandleError(c, err, http.StatusBadRequest)
 			return
 		}
 
@@ -184,11 +157,8 @@ func GetQr(c *gin.Context) {
 		for index, color := range req.FgColor {
 			rgba, err := convertHexToRGB(color)
 			if err != nil {
-				response.CustomErrorResponse(
-					c,
-					http.StatusBadRequest,
-					map[string]string{code.SERVER_ERROR: err.Error()},
-				)
+				helper.HandleError(c, err, http.StatusBadRequest)
+				return
 			}
 
 			stops = append(stops, standard.ColorStop{
@@ -219,21 +189,13 @@ func GetQr(c *gin.Context) {
 
 	writer, err := standard.New(filepath, options...)
 	if err != nil {
-		response.CustomErrorResponse(
-			c,
-			http.StatusBadRequest,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+		helper.HandleError(c, err, http.StatusBadRequest)
 		return
 	}
 
 	// ------ ファイル出力
 	if err = qrc.Save(writer); err != nil {
-		response.CustomErrorResponse(
-			c,
-			http.StatusBadRequest,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+		helper.HandleError(c, err, http.StatusBadRequest)
 		return
 	}
 
@@ -241,17 +203,13 @@ func GetQr(c *gin.Context) {
 	if req.QrWidth > 0 {
 		err := ResizeImage(filepath, extension, req.QrWidth, req.QrWidth)
 		if err != nil {
-			response.CustomErrorResponse(
-				c,
-				http.StatusBadRequest,
-				map[string]string{code.SERVER_ERROR: err.Error()},
-			)
+			helper.HandleError(c, err, http.StatusBadRequest)
 			return
 		}
 	}
 
 	// ダウンロードファイル名を返却
-	c.JSON(http.StatusOK, gin.H{
+	helper.SuccessResponse(c, gin.H{
 		"url": filename,
 	})
 }

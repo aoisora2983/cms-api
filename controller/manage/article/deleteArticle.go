@@ -2,9 +2,8 @@ package article
 
 import (
 	"cms/db/models"
-	code "cms/package/error"
+	"cms/package/helper"
 	"cms/package/request"
-	"cms/package/response"
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,17 +13,7 @@ import (
 
 func DeleteArticle(c *gin.Context) {
 	var req request.DeleteArticleRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		if validErr, ok := err.(response.ValidationError); ok {
-			c.JSON(validErr.GetStatus(), validErr.GetResponse())
-			return
-		}
-
-		response.CustomErrorResponse(
-			c,
-			http.StatusBadRequest,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+	if !helper.BindRequest(c, &req) {
 		return
 	}
 
@@ -34,17 +23,11 @@ func DeleteArticle(c *gin.Context) {
 		var idBranch, _ = strconv.Atoi(result[1])
 
 		err := models.DeleteContent(id, idBranch)
-
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"code":         http.StatusInternalServerError,
-				"errorMessage": err.Error(),
-			})
+			helper.HandleError(c, err, http.StatusInternalServerError)
 			return
 		}
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"status": "ok",
-	})
+	helper.OKResponse(c)
 }

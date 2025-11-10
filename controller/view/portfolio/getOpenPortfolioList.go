@@ -2,8 +2,7 @@ package portfolio
 
 import (
 	"cms/db/models"
-	code "cms/package/error"
-	"cms/package/response"
+	"cms/package/helper"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -11,18 +10,10 @@ import (
 
 func GetOpenPortfolioList(c *gin.Context) {
 	portfolioList, err := models.GetOpenPortfolioList()
-
 	if err != nil {
-		response.CustomErrorResponse(
-			c,
-			http.StatusInternalServerError,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+		helper.HandleError(c, err, http.StatusInternalServerError)
 		return
 	}
 
-	c.JSON(
-		http.StatusCreated,
-		portfolioList,
-	)
+	helper.CreatedResponse(c, portfolioList)
 }

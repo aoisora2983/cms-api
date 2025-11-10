@@ -4,11 +4,9 @@ import (
 	"cms/constant"
 	"cms/db/models"
 	"cms/package/correct"
-	code "cms/package/error"
+	"cms/package/helper"
 	"cms/package/request"
-	"cms/package/response"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -17,31 +15,14 @@ import (
 
 func RegisterArticle(c *gin.Context) {
 	var req request.RegisterArticleRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		if validErr, ok := err.(response.ValidationError); ok {
-			c.JSON(validErr.GetStatus(), validErr.GetResponse())
-			return
-		}
-
-		response.CustomErrorResponse(
-			c,
-			http.StatusBadRequest,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+	if !helper.BindRequest(c, &req) {
 		return
 	}
 
-	cUserId, exists := c.Get("userId")
-	if !exists {
-		response.CustomErrorResponse(
-			c,
-			http.StatusBadRequest,
-			map[string]string{code.NOT_EXISTS: "存在しないユーザーです。"},
-		)
+	userId, ok := helper.GetUserIDFromContext(c)
+	if !ok {
 		return
 	}
-	userIdStr := cUserId.(string)
-	userId, _ := strconv.Atoi(userIdStr)
 
 	var id int = 1
 	var idBranch int = 1
@@ -54,11 +35,8 @@ func RegisterArticle(c *gin.Context) {
 		//前の記事情報を取得
 		content, err := models.GetBlogContent(id, idBranch, false)
 		if err != nil {
-			response.CustomErrorResponse(
-				c,
-				http.StatusInternalServerError,
-				map[string]string{code.SERVER_ERROR: err.Error()},
-			)
+			helper.HandleError(c, err, http.StatusInternalServerError)
+			return
 		}
 
 		// 枝番繰り上げ or 上書き判定
@@ -80,11 +58,7 @@ func RegisterArticle(c *gin.Context) {
 		// 最新のID取得
 		latestId, err := models.GetLatestId()
 		if err != nil {
-			response.CustomErrorResponse(
-				c,
-				http.StatusInternalServerError,
-				map[string]string{code.SERVER_ERROR: err.Error()},
-			)
+			helper.HandleError(c, err, http.StatusInternalServerError)
 			return
 		}
 
@@ -130,10 +104,7 @@ func RegisterArticle(c *gin.Context) {
 	}
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"code":         http.StatusInternalServerError,
-			"errorMessage": err.Error(),
-		})
+		helper.HandleError(c, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -150,18 +121,12 @@ func RegisterArticle(c *gin.Context) {
 			"id_tag":            tagId,
 		}
 
-		models.InsertBlogTag(tag)
-
+		err := models.InsertBlogTag(tag)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"code":         http.StatusInternalServerError,
-				"errorMessage": err.Error(),
-			})
+			helper.HandleError(c, err, http.StatusInternalServerError)
 			return
 		}
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"status": "ok",
-	})
+	helper.OKResponse(c)
 }

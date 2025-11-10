@@ -1,8 +1,7 @@
 package manage
 
 import (
-	code "cms/package/error"
-	"cms/package/response"
+	"cms/package/helper"
 	"fmt"
 	"io"
 	"net/http"
@@ -24,21 +23,13 @@ func ImgUpload(c *gin.Context) {
 	}
 
 	if err != nil {
-		response.CustomErrorResponse(
-			c,
-			http.StatusBadRequest,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+		helper.HandleError(c, err, http.StatusBadRequest)
 		return
 	}
 
 	src, err := file.Open()
 	if err != nil {
-		response.CustomErrorResponse(
-			c,
-			http.StatusBadRequest,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+		helper.HandleError(c, err, http.StatusBadRequest)
 		return
 	}
 
@@ -51,26 +42,17 @@ func ImgUpload(c *gin.Context) {
 	path := fmt.Sprintf("/upload/img/%s", guid+extension)
 	dst, err := os.Create(fmt.Sprintf("%s/upload/img/%s", ProjectRoot(), guid+extension))
 	if err != nil {
-		response.CustomErrorResponse(
-			c,
-			http.StatusBadRequest,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+		helper.HandleError(c, err, http.StatusBadRequest)
 		return
 	}
 	defer dst.Close()
 
 	if _, err = io.Copy(dst, src); err != nil {
-
-		response.CustomErrorResponse(
-			c,
-			http.StatusBadRequest,
-			map[string]string{code.SERVER_ERROR: err.Error()},
-		)
+		helper.HandleError(c, err, http.StatusBadRequest)
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
+	helper.CreatedResponse(c, gin.H{
 		"url": path,
 	})
 }
