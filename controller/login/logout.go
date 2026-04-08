@@ -8,6 +8,6 @@ import (
 )
 
 func Logout(c *gin.Context) {
-	c.SetCookie("token", "", -1, "/", config.AppDomain(), false, true)
+	c.SetCookie("authToken", "", -1, "/", config.AppDomain(), false, true)
 	helper.OKResponse(c)
 }

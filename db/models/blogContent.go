@@ -29,6 +29,7 @@ type BlogContentParam struct {
 	IdBranch *int
 	Keyword  string
 	Tags     []int
+	Statuses []int
 	IsOpen   bool
 	Limit    int
 	Offset   int
@@ -106,7 +107,7 @@ func GetBlogContentList(param BlogContentParam) ([]map[string]interface{}, error
 	database := db.GetDB()
 
 	// 記事一覧取得
-	query := database.Table("blog_contents").
+	subquery := database.Table("blog_contents").
 		Distinct(
 			"blog_contents.id",
 			"blog_contents.id_branch",
@@ -122,7 +123,6 @@ func GetBlogContentList(param BlogContentParam) ([]map[string]interface{}, error
 			"system_users.name as user_name",
 			"system_users.description as user_description",
 			"system_users.icon_path as user_icon_path",
-			"COUNT(blog_contents.*) OVER() as total",
 		).
 		Joins("LEFT JOIN blog_tags ON blog_contents.id = blog_tags.id_blog_content AND blog_contents.id_branch = blog_tags.id_branch_blog_content").
 		Joins("LEFT JOIN system_users ON blog_contents.id_user = system_users.id").
@@ -131,28 +131,37 @@ func GetBlogContentList(param BlogContentParam) ([]map[string]interface{}, error
 		Order("blog_contents.id")
 
 	if param.Id != nil {
-		query.Where("blog_contents.id = ?", param.Id)
+		subquery.Where("blog_contents.id = ?", param.Id)
 	}
 
 	if param.IdBranch != nil {
-		query.Where("blog_contents.id_branch = ?", param.IdBranch)
+		subquery.Where("blog_contents.id_branch = ?", param.IdBranch)
 	}
 
 	if param.Keyword != "" {
 		keywordLike := fmt.Sprintf("%%%s%%", param.Keyword)
-		query.Where(database.Where("blog_contents.title LIKE ?", keywordLike).Or("blog_contents.content LIKE ?", keywordLike))
+		subquery.Where(database.Where("blog_contents.title LIKE ?", keywordLike).Or("blog_contents.content LIKE ?", keywordLike))
 	}
 
 	if len(param.Tags) > 0 {
-		query.Where("blog_tags.id_tag IN ?", param.Tags)
+		subquery.Where("blog_tags.id_tag IN ?", param.Tags)
+	}
+
+	if len(param.Statuses) > 0 {
+		subquery.Where("blog_contents.status IN ?", param.Statuses)
 	}
 
 	if param.IsOpen {
 		// 公開中
-		query.Where("blog_contents.status = ?", constant.ARTICLE_OPEN)
-		query.Where("blog_contents.published_start_time <= current_timestamp")
-		query.Where("(blog_contents.published_end_time >= current_timestamp OR blog_contents.published_end_time IS NULL)")
+		subquery.Where("blog_contents.status = ?", constant.ARTICLE_OPEN)
+		subquery.Where("blog_contents.published_start_time <= current_timestamp")
+		subquery.Where("(blog_contents.published_end_time >= current_timestamp OR blog_contents.published_end_time IS NULL)")
 	}
+
+	query := database.Table("(?) as sub_blog_contents", subquery).Select(
+		"*",
+		"COUNT(1) OVER() as total",
+	)
 
 	if param.Limit != 0 {
 		query.Limit(param.Limit)

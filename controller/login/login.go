@@ -36,10 +36,11 @@ func Login(c *gin.Context) {
 	}
 
 	if config.IsLocal() {
-		c.SetCookie("authToken", token, 36000, "/", config.AppDomain(), false, false)
+		c.SetSameSite(http.SameSiteLaxMode)
+		c.SetCookie("authToken", token, 36000, "/", "", false, false)
 	} else {
-		c.SetCookie("authToken", token, 36000, "/", config.AppDomain(), true, false)
 		c.SetSameSite(http.SameSiteStrictMode)
+		c.SetCookie("authToken", token, 36000, "/", config.AppDomain(), true, false)
 	}
 
 	helper.CreatedResponse(c, gin.H{

@@ -48,10 +48,15 @@ func setup() {
 
 // setupCORS CORS設定
 func setupCORS(r *gin.Engine) {
+	allowOrigin := "https://" + config.AppDomain()
+	if config.IsLocal() {
+		allowOrigin = "http://localhost:3000"
+	}
 	r.Use(cors.New(cors.Config{
 		AllowMethods: []string{
 			"GET",
 			"POST",
+			"OPTIONS",
 		},
 		AllowHeaders: []string{
 			"Access-Control-Allow-Headers",
@@ -60,9 +65,13 @@ func setupCORS(r *gin.Engine) {
 			"Accept-Encoding",
 			"X-CSRF-Token",
 			"Authorization",
+			"Origin",
+			"Accept",
+			"credentials",
 		},
+		AllowCredentials: true,
 		AllowOrigins: []string{
-			config.AppDomain(),
+			allowOrigin,
 		},
 	}))
 }
