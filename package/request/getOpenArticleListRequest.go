@@ -7,10 +7,11 @@ import (
 )
 
 type GetOpenArticleListRequest struct {
-	Keyword string `form:"keyword"`
-	Tags    []int  `form:"tags"`
-	Limit   int    `form:"limit"`
-	Page    int    `form:"page"`
+	Keyword        string `json:"keyword"`
+	Tags           []int  `json:"tags"`
+	Limit          int    `json:"limit"`
+	Page           int    `json:"page"`
+	ExcludePageIds []int  `json:"exclude_page_ids"`
 }
 
 func (r GetOpenArticleListRequest) Validate() error {

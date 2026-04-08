@@ -5,6 +5,7 @@ import (
 	"cms/db/models"
 	"cms/package/helper"
 	"cms/package/request"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -19,12 +20,15 @@ func GetOpenArticleList(c *gin.Context) {
 		return
 	}
 
+	fmt.Printf("%+v\n", req)
+
 	param := models.BlogContentParam{
-		IsOpen:  true,
-		Keyword: req.Keyword,
-		Tags:    req.Tags,
-		Limit:   req.Limit,
-		Offset:  req.Limit * req.Page,
+		IsOpen:         true,
+		Keyword:        req.Keyword,
+		Tags:           req.Tags,
+		ExcludePageIds: req.ExcludePageIds,
+		Limit:          req.Limit,
+		Offset:         req.Limit * req.Page,
 	}
 	articleList, err := models.GetBlogContentList(param)
 	if err != nil {
