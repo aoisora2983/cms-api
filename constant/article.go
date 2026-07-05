@@ -12,6 +12,13 @@ const (
 	ARTICLE_EXPIRED = 3
 )
 
+// article type
+const (
+	PAGE           = 0
+	PRIVACY_POLICY = 1
+	ABOUT_US       = 2
+)
+
 func GetArticleStatusId(status int, startTime string, endTime *string) int {
 	_startTime, _ := time.Parse(time.RFC3339, startTime)
 	_endTime := time.Now().Add(999)

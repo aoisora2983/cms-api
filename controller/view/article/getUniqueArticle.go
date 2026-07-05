@@ -9,17 +9,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetReplaceWordList(c *gin.Context) {
-	var req request.GetReplaceWordListRequest
+/**
+ * 特殊記事取得
+ */
+func GetUniqueArticle(c *gin.Context) {
+	var req request.GetUniqueArticleRequest
 	if !helper.BindQuery(c, &req) {
 		return
 	}
 
-	wordList, err := models.GetCorrectWordListById(req.Id, req.Keyword, req.AlertLevel)
+	content, err := models.GetBlogContentByPageType(req.PageType, true)
 	if err != nil {
 		helper.HandleError(c, err, http.StatusInternalServerError)
 		return
 	}
 
-	helper.CreatedResponse(c, wordList)
+	helper.CreatedResponse(c, content)
 }

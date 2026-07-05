@@ -20,6 +20,7 @@ func GetArticleList(c *gin.Context) {
 		Keyword:  req.Keyword,
 		Tags:     req.Tags,
 		Statuses: req.Statuses,
+		PageType: nil,
 		Limit:    req.Limit,
 		Offset:   req.Limit * req.Page,
 	}

@@ -15,6 +15,7 @@ type RegisterArticleRequest struct {
 	PublishedEndDate   string `json:"published_end_date"`
 	PublishedEndTime   string `json:"published_end_time"`
 	Description        string `json:"description"`
+	PageType           int    `json:"page_type"`
 }
 
 func (r RegisterArticleRequest) Validate() error {

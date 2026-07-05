@@ -5,7 +5,6 @@ import (
 	"cms/db/models"
 	"cms/package/helper"
 	"cms/package/request"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -20,12 +19,12 @@ func GetOpenArticleList(c *gin.Context) {
 		return
 	}
 
-	fmt.Printf("%+v\n", req)
-
+	pageType := constant.PAGE
 	param := models.BlogContentParam{
 		IsOpen:         true,
 		Keyword:        req.Keyword,
 		Tags:           req.Tags,
+		PageType:       &pageType,
 		ExcludePageIds: req.ExcludePageIds,
 		Limit:          req.Limit,
 		Offset:         req.Limit * req.Page,

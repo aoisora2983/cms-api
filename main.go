@@ -131,7 +131,7 @@ func setupBlogRoutes(mg *gin.RouterGroup) {
 		blog.POST("/accessibility/register", article.RegisterAccessibilityList)
 
 		// 置換文字列
-		blog.GET("/accessibility/replace/word/list", article.GetReplaceWordList)
+		blog.POST("/accessibility/replace/word/list", article.GetReplaceWordList)
 		blog.POST("/accessibility/replace/word/register", article.RegisterReplaceWord)
 	}
 }
@@ -198,6 +198,8 @@ func setupViewArticleRoutes(views *gin.RouterGroup) {
 		articles.GET("/comment/count/good", comment.CountUpCommentGood)
 		articles.GET("/tag", openArticle.GetTag)
 		articles.GET("/tag/list", article.GetTagList)
+
+		articles.GET("/unique/", openArticle.GetUniqueArticle)
 	}
 }
 

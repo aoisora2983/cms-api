@@ -35,16 +35,25 @@ func GetReplaceableCorrectWordListById(accessibilityId int) ([]CorrectWord, erro
 	return correctWords, nil
 }
 
-func GetCorrectWordListById(accessibilityId int) ([]CorrectWord, error) {
+func GetCorrectWordListById(accessibilityId int, keyword string, alertLevel []int) ([]CorrectWord, error) {
 	database := db.GetDB()
 
 	var correctWords []CorrectWord
 
-	result := database.Select("*").
-		Where("id_accessibility <> ?", accessibilityId).
-		Order("id").
-		Find(&correctWords)
+	query := database.Select("*").
+		Where("id_accessibility = ?", accessibilityId).
+		Order("id")
 
+	if keyword != "" {
+		likeWord := "%" + keyword + "%"
+		query.Where(database.Where("word_from LIKE ?", likeWord).Or("word_to LIKE ?", likeWord))
+	}
+
+	if len(alertLevel) > 0 {
+		query.Where("level IN ?", alertLevel)
+	}
+
+	result := query.Find(&correctWords)
 	if result.Error != nil {
 		return nil, result.Error
 	}

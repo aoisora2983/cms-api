@@ -22,6 +22,7 @@ type BlogContent struct {
 	PublishedEndTime     *string `gorm:"column:published_end_time" json:"published_end_time"`
 	PublishedUpdatedTime *string `gorm:"column:published_updated_time" json:"published_updated_time"`
 	Description          string  `gorm:"column:description" json:"description"`
+	PageType             int     `gorm:"column:page_type" json:"page_type"`
 }
 
 type BlogContentParam struct {
@@ -32,6 +33,7 @@ type BlogContentParam struct {
 	Statuses       []int
 	IsOpen         bool
 	ExcludePageIds []int
+	PageType       *int
 	Limit          int
 	Offset         int
 }
@@ -70,6 +72,7 @@ func InsertContent(data map[string]interface{}) error {
 		PublishedStartTime: data["published_start_time"].(string),
 		PublishedEndTime:   data["published_end_time"].(*string),
 		Description:        data["description"].(string),
+		PageType:           data["page_type"].(int),
 	}).Error; err != nil {
 		return err
 	}
@@ -94,6 +97,7 @@ func UpdateContent(data map[string]interface{}) error {
 			PublishedEndTime:     data["published_end_time"].(*string),
 			PublishedUpdatedTime: &updateTime,
 			Description:          data["description"].(string),
+			PageType:             data["page_type"].(int),
 		}).Error; err != nil {
 		return err
 	}
@@ -114,7 +118,6 @@ func GetBlogContentList(param BlogContentParam) ([]map[string]interface{}, error
 			"blog_contents.id_branch",
 			"blog_contents.id_user",
 			"blog_contents.title",
-			"blog_contents.content",
 			"blog_contents.status",
 			"blog_contents.thumbnail",
 			"blog_contents.published_start_time",
@@ -150,6 +153,10 @@ func GetBlogContentList(param BlogContentParam) ([]map[string]interface{}, error
 
 	if len(param.Statuses) > 0 {
 		subquery.Where("blog_contents.status IN ?", param.Statuses)
+	}
+
+	if param.PageType != nil {
+		subquery.Where("page_type = ?", param.PageType)
 	}
 
 	if param.IsOpen {
@@ -217,6 +224,50 @@ func GetBlogContent(id int, idBranch int, isOpen bool) (map[string]interface{}, 
 	if idBranch != -1 {
 		query.Where("blog_contents.id_branch = ?", idBranch)
 	}
+
+	if isOpen {
+		// 公開中
+		query.Where("blog_contents.status = ?", constant.ARTICLE_OPEN)
+		query.Where("blog_contents.published_start_time <= current_timestamp")
+		query.Where("(blog_contents.published_end_time >= current_timestamp OR blog_contents.published_end_time IS NULL)")
+	}
+
+	content := make(map[string]interface{})
+	query.Take(content)
+
+	if query.Error != nil {
+		return nil, query.Error
+	}
+
+	return content, nil
+}
+
+func GetBlogContentByPageType(pageType int, isOpen bool) (map[string]interface{}, error) {
+	database := db.GetDB()
+
+	query := database.Table("blog_contents").
+		Select(
+			"blog_contents.id",
+			"blog_contents.id_branch",
+			"blog_contents.id_user",
+			"blog_contents.title",
+			"blog_contents.content",
+			"blog_contents.status",
+			"blog_contents.thumbnail",
+			"blog_contents.published_start_time",
+			"blog_contents.published_end_time",
+			"blog_contents.published_updated_time",
+			"blog_contents.description",
+			"system_users.name as user_name",
+			"system_users.description as user_description",
+			"system_users.icon_path as user_icon_path",
+			"COUNT(blog_contents.*) OVER()",
+		).
+		Joins("LEFT JOIN system_users ON blog_contents.id_user = system_users.id").
+		Where("blog_contents.deleted_at IS NULL")
+
+	// pageType指定
+	query.Where("blog_contents.page_type = ?", pageType)
 
 	if isOpen {
 		// 公開中

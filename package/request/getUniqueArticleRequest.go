@@ -6,16 +6,14 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation"
 )
 
-type GetReplaceWordListRequest struct {
-	Id         int    `json:"id"`
-	Keyword    string `json:"keyword"`
-	AlertLevel []int  `json:"alert_level"`
+type GetUniqueArticleRequest struct {
+	PageType int `form:"page_type"`
 }
 
-func (r GetReplaceWordListRequest) Validate() error {
+func (r GetUniqueArticleRequest) Validate() error {
 	return validation.ValidateStruct(&r,
 		validation.Field(
-			&r.Id,
+			&r.PageType,
 			validation.By(customValidation.Numeric),
 		),
 	)
