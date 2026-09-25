@@ -15,17 +15,7 @@ func RegisterUser(c *gin.Context) {
 		return
 	}
 
-	user := map[string]interface{}{
-		"id":          req.Id,
-		"name":        req.Name,
-		"password":    req.Password,
-		"mail":        req.Mail,
-		"group_id":    req.GroupId,
-		"description": req.Description,
-		"filename":    req.Filename,
-	}
-
-	err := models.SaveUser(user)
+	err := models.SaveUser(req)
 	if err != nil {
 		helper.HandleError(c, err, http.StatusInternalServerError)
 		return

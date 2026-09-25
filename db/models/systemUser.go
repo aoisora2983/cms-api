@@ -2,6 +2,7 @@ package models
 
 import (
 	"cms/db"
+	"cms/package/request"
 
 	"gorm.io/gorm"
 )
@@ -62,7 +63,7 @@ func GetUserList() ([]SystemUser, error) {
 	return users, nil
 }
 
-func SaveUser(data map[string]interface{}) error {
+func SaveUser(data request.RegisterUserRequest) error {
 	database := db.GetDB()
 
 	sortOrder := make(map[string]interface{})
@@ -74,32 +75,36 @@ func SaveUser(data map[string]interface{}) error {
 	}
 	var id int
 	id = _sortOrder
-	if data["id"] != 0 {
-		id = data["id"].(int)
+	if data.Id != 0 {
+		id = data.Id
 	}
 
 	content := SystemUser{
 		Id:          id,
-		GroupId:     data["group_id"].(int),
-		Name:        data["name"].(string),
-		Description: data["description"].(string),
-		Mail:        data["mail"].(string),
-		IconPath:    data["filename"].(string),
-		Password:    data["password"].(string),
+		GroupId:     data.GroupId,
+		Name:        data.Name,
+		Description: data.Description,
+		Mail:        data.Mail,
+		IconPath:    data.Filename,
+		Password:    data.Password,
 	}
 
 	// updateなら並び順はアップデートしない
 	var result *gorm.DB
-	if data["id"].(int) == 0 {
+	if data.Id == 0 {
 		content.SortOrder = _sortOrder
 		result = database.Create(&content)
 	} else {
-		content.Id = data["id"].(int)
+		content.Id = data.Id
 		result = database.Updates(&content)
 	}
 
 	if err := result.Error; err != nil {
 		return err
+	}
+
+	if data.Links != nil && len(data.Links) > 0 {
+		SaveUserLink(content.Id, data.Links)
 	}
 
 	return nil

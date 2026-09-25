@@ -52,6 +52,14 @@ func GetOpenArticle(c *gin.Context) {
 	}
 	articleMap["comments"] = commentList
 
+	// ユーザーリンク取得
+	userLinks, err := models.GetUserLinks(int(content["user_id"].(int32)))
+	if err != nil {
+		helper.HandleError(c, err, http.StatusInternalServerError)
+		return
+	}
+	content["user_links"] = userLinks
+
 	articleMap["content"] = content
 
 	helper.CreatedResponse(c, articleMap)
