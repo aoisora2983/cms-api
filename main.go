@@ -8,6 +8,7 @@ import (
 	"cms/controller/manage/correct"
 	manageOpinion "cms/controller/manage/opinion"
 	"cms/controller/manage/portfolio"
+	"cms/controller/manage/subSite"
 	"cms/controller/manage/systemgroup"
 	"cms/controller/manage/user"
 	"cms/controller/view"
@@ -15,6 +16,7 @@ import (
 	"cms/controller/view/comment"
 	"cms/controller/view/opinion"
 	openPortfolio "cms/controller/view/portfolio"
+	openSubSite "cms/controller/view/subSite"
 	"cms/controller/view/tool"
 	"cms/middleware"
 	"cms/package/validation"
@@ -104,6 +106,7 @@ func setupManageRoutes(api *gin.RouterGroup) {
 		setupUserRoutes(mg)
 		setupSystemGroupRoutes(mg)
 		setupOpinionRoutes(mg)
+		setupSubSiteRoutes(mg)
 	}
 }
 
@@ -120,6 +123,7 @@ func setupBlogRoutes(mg *gin.RouterGroup) {
 		// タグ関係
 		blog.POST("/tag/register", article.RegisterTag)
 		blog.POST("/tag/delete", article.DeleteTag)
+		blog.GET("/tag/list", article.GetTagList)
 
 		// コメント関係
 		blog.GET("/comment/get/list", article.GetCommentList)
@@ -166,6 +170,16 @@ func setupSystemGroupRoutes(mg *gin.RouterGroup) {
 	}
 }
 
+// setupSubSite サブサイト関連ルーティング
+func setupSubSiteRoutes(mg *gin.RouterGroup) {
+	subSites := mg.Group("/sub/site")
+	{
+		subSites.GET("/get/list", subSite.GetSubSiteList)
+		subSites.POST("/register", subSite.RegisterSubSite)
+		subSites.POST("/delete", subSite.DeleteSubSite)
+	}
+}
+
 // setupOpinionRoutes 問合わせ関連ルーティング
 func setupOpinionRoutes(mg *gin.RouterGroup) {
 	opinions := mg.Group("/opinion")
@@ -184,6 +198,7 @@ func setupViewRoutes(api *gin.RouterGroup) {
 		setupViewPortfolioRoutes(views)
 		setupViewOpinionRoutes(views)
 		setupViewToolRoutes(views)
+		setupViewSubSites(views)
 	}
 }
 
@@ -197,7 +212,7 @@ func setupViewArticleRoutes(views *gin.RouterGroup) {
 		articles.POST("/comment", comment.PostComment)
 		articles.GET("/comment/count/good", comment.CountUpCommentGood)
 		articles.GET("/tag", openArticle.GetTag)
-		articles.GET("/tag/list", article.GetTagList)
+		articles.GET("/tag/list", openArticle.GetOpenTagList)
 
 		articles.GET("/unique/", openArticle.GetUniqueArticle)
 	}
@@ -225,5 +240,14 @@ func setupViewToolRoutes(views *gin.RouterGroup) {
 	tools := views.Group("/tool")
 	{
 		tools.POST("/qr", tool.GetQr)
+	}
+}
+
+// setupViewSubSites サブサイト関連ルーティング
+func setupViewSubSites(views *gin.RouterGroup) {
+	subSites := views.Group("/sub/site")
+	{
+		subSites.GET("/", openSubSite.GetSubSite)
+		subSites.GET("/get/list", openSubSite.GetOpenSubSiteList)
 	}
 }

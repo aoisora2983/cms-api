@@ -24,6 +24,7 @@ func GetOpenArticleList(c *gin.Context) {
 		IsOpen:         true,
 		Keyword:        req.Keyword,
 		Tags:           req.Tags,
+		IdSubSite:      []int{req.IdSubSite},
 		PageType:       &pageType,
 		ExcludePageIds: req.ExcludePageIds,
 		Limit:          req.Limit,

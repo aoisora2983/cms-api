@@ -93,6 +93,7 @@ func RegisterArticle(c *gin.Context) {
 		"published_end_time":   publishedEndTime,
 		"description":          req.Description,
 		"page_type":            req.PageType,
+		"published_site":       req.PublishedSite,
 	}
 
 	var err error

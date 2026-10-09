@@ -17,12 +17,14 @@ func GetArticleList(c *gin.Context) {
 	}
 
 	param := models.BlogContentParam{
-		Keyword:  req.Keyword,
-		Tags:     req.Tags,
-		Statuses: req.Statuses,
-		PageType: nil,
-		Limit:    req.Limit,
-		Offset:   req.Limit * req.Page,
+		Keyword:   req.Keyword,
+		PageNo:    req.PageNo,
+		Tags:      req.Tags,
+		Statuses:  req.Statuses,
+		PageType:  nil,
+		IdSubSite: req.SubSites,
+		Limit:     req.Limit,
+		Offset:    req.Limit * req.Page,
 	}
 
 	articleList, err := models.GetBlogContentList(param)

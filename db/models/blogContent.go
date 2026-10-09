@@ -23,17 +23,20 @@ type BlogContent struct {
 	PublishedUpdatedTime *string `gorm:"column:published_updated_time" json:"published_updated_time"`
 	Description          string  `gorm:"column:description" json:"description"`
 	PageType             int     `gorm:"column:page_type" json:"page_type"`
+	IdSubSite            int     `gorm:"column:id_sub_site" json:"id_sub_site"`
 }
 
 type BlogContentParam struct {
 	Id             *int
 	IdBranch       *int
 	Keyword        string
+	PageNo         *int
 	Tags           []int
 	Statuses       []int
 	IsOpen         bool
 	ExcludePageIds []int
 	PageType       *int
+	IdSubSite      []int
 	Limit          int
 	Offset         int
 }
@@ -73,6 +76,7 @@ func InsertContent(data map[string]interface{}) error {
 		PublishedEndTime:   data["published_end_time"].(*string),
 		Description:        data["description"].(string),
 		PageType:           data["page_type"].(int),
+		IdSubSite:          data["published_site"].(int),
 	}).Error; err != nil {
 		return err
 	}
@@ -98,6 +102,7 @@ func UpdateContent(data map[string]interface{}) error {
 			PublishedUpdatedTime: &updateTime,
 			Description:          data["description"].(string),
 			PageType:             data["page_type"].(int),
+			IdSubSite:            data["published_site"].(int),
 		}).Error; err != nil {
 		return err
 	}
@@ -166,6 +171,14 @@ func GetBlogContentList(param BlogContentParam) ([]map[string]interface{}, error
 		subquery.Where("(blog_contents.published_end_time >= current_timestamp OR blog_contents.published_end_time IS NULL)")
 	}
 
+	if param.PageNo != nil && *param.PageNo > 0 {
+		subquery.Where("blog_contents.id = ?", *param.PageNo)
+	}
+
+	if len(param.IdSubSite) > 0 {
+		subquery.Where("blog_contents.id_sub_site IN ?", param.IdSubSite)
+	}
+
 	if len(param.ExcludePageIds) > 0 {
 		subquery.Where("blog_contents.id NOT IN ?", param.ExcludePageIds)
 	}
@@ -210,6 +223,7 @@ func GetBlogContent(id int, idBranch int, isOpen bool) (map[string]interface{}, 
 			"blog_contents.published_end_time",
 			"blog_contents.published_updated_time",
 			"blog_contents.description",
+			"blog_contents.id_sub_site",
 			"system_users.id as user_id",
 			"system_users.name as user_name",
 			"system_users.description as user_description",

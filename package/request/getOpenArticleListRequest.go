@@ -9,6 +9,7 @@ import (
 type GetOpenArticleListRequest struct {
 	Keyword        string `json:"keyword"`
 	Tags           []int  `json:"tags"`
+	IdSubSite      int    `json:"id_sub_site"`
 	Limit          int    `json:"limit"`
 	Page           int    `json:"page"`
 	ExcludePageIds []int  `json:"exclude_page_ids"`

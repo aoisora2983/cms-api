@@ -7,11 +7,13 @@ import (
 )
 
 type GetArticleListRequest struct {
-	Keyword  string `form:"keyword"`
-	Tags     []int  `form:"tags"`
-	Statuses []int  `form:"statuses"`
-	Limit    int    `form:"limit"`
-	Page     int    `form:"page"`
+	Keyword  string `json:"keyword"`
+	PageNo   *int   `json:"page_no"`
+	Tags     []int  `json:"tags"`
+	Statuses []int  `json:"statuses"`
+	SubSites []int  `json:"sub_sites"`
+	Limit    int    `json:"limit"`
+	Page     int    `json:"page"`
 }
 
 func (r GetArticleListRequest) Validate() error {

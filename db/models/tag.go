@@ -1,6 +1,7 @@
 package models
 
 import (
+	"cms/constant"
 	"cms/db"
 
 	"gorm.io/gorm"
@@ -61,6 +62,36 @@ func GetTagList() ([]Tag, error) {
 		Find(&tags).
 		Order("sort_order").
 		Order("id")
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return tags, nil
+}
+
+func GetOpenTagList(idSubSite int) ([]Tag, error) {
+	database := db.GetDB()
+
+	var tags []Tag
+
+	subQuery := database.Table("blog_tags").
+		Select("1").
+		Joins("INNER JOIN blog_contents ON blog_contents.id = blog_tags.id_blog_content AND blog_contents.id_branch = blog_tags.id_branch_blog_content").
+		Where("blog_tags.id_tag = tags.id").
+		Where("blog_tags.deleted_at IS NULL").
+		Where("blog_contents.deleted_at IS NULL").
+		Where("blog_contents.status = ?", constant.ARTICLE_OPEN).
+		Where("blog_contents.published_start_time <= current_timestamp").
+		Where("(blog_contents.published_end_time >= current_timestamp OR blog_contents.published_end_time IS NULL)").
+		Where("id_sub_site = ?", idSubSite)
+
+	result := database.Table("tags").
+		Select("tags.id, tags.name, tags.icon_path, tags.sort_order").
+		Where("tags.deleted_at IS NULL").
+		Where("EXISTS (?)", subQuery).
+		Order("tags.sort_order, tags.id").
+		Find(&tags)
 
 	if result.Error != nil {
 		return nil, result.Error
