@@ -66,9 +66,9 @@ func GetPortfolioList() ([]Portfolio, error) {
 
 	var portfolios []Portfolio
 
-	result := database.Find(&portfolios).
-		Order("sort_order").
-		Order("id")
+	result := database.Order("sort_order").
+		Order("id").
+		Find(&portfolios)
 
 	if result.Error != nil {
 		return nil, result.Error

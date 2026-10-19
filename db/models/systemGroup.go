@@ -23,9 +23,9 @@ func GetSystemGroupList() ([]SystemGroup, error) {
 	var systemGroups []SystemGroup
 
 	result := database.Select("id", "name", "edit_blog", "edit_category", "edit_tag", "edit_user").
-		Find(&systemGroups).
 		Order("sort_order").
-		Order("id")
+		Order("id").
+		Find(&systemGroups)
 
 	if result.Error != nil {
 		return nil, result.Error

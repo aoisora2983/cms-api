@@ -22,10 +22,10 @@ func GetSubSiteById(id int) (SubSite, error) {
 
 	var subSite SubSite
 
-	result := database.Find(&subSite).
-		Where("id = ?", id).
+	result := database.Where("id = ?", id).
 		Order("sort_order").
-		Order("id")
+		Order("id").
+		Find(&subSite)
 
 	if result.Error != nil {
 		return subSite, result.Error
@@ -39,10 +39,10 @@ func GetSubSiteByDirname(dirname string) (SubSite, error) {
 
 	var subSite SubSite
 
-	result := database.Find(&subSite).
-		Where("subdir_name = ?", dirname).
+	result := database.Where("subdir_name = ?", dirname).
 		Order("sort_order").
-		Order("id")
+		Order("id").
+		Find(&subSite)
 
 	if result.Error != nil {
 		return subSite, result.Error
@@ -56,13 +56,14 @@ func GetSubSiteList(status *int) ([]SubSite, error) {
 
 	var subSite []SubSite
 
-	result := database.Find(&subSite).
-		Order("sort_order").
+	query := database.Order("sort_order").
 		Order("id")
 
 	if status != nil {
-		result.Where("status = ?", status)
+		query.Where("status = ?", status)
 	}
+
+	result := query.Find(&subSite)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -102,7 +103,7 @@ func SaveSubSite(data request.RegisterSubSiteRequest) error {
 		content.SortOrder = _sortOrder
 		result = database.Create(&content)
 	} else {
-		result = database.Updates(&content)
+		result = database.Save(&content)
 	}
 
 	if err := result.Error; err != nil {

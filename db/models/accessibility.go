@@ -29,8 +29,8 @@ func GetAccessibilityList() ([]Accessibility, error) {
 	var accessibility []Accessibility
 
 	result := database.Select("*").
-		Find(&accessibility).
-		Order("id")
+		Order("id").
+		Find(&accessibility)
 
 	if result.Error != nil {
 		return nil, result.Error

@@ -59,9 +59,9 @@ func GetTagList() ([]Tag, error) {
 	var tags []Tag
 
 	result := database.Select("id", "name", "icon_path").
-		Find(&tags).
 		Order("sort_order").
-		Order("id")
+		Order("id").
+		Find(&tags)
 
 	if result.Error != nil {
 		return nil, result.Error
