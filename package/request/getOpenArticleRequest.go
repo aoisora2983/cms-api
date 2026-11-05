@@ -7,8 +7,9 @@ import (
 )
 
 type GetOpenArticleRequest struct {
-	Id       int `form:"id"`
-	IdBranch int `form:"id_branch"`
+	Id        int `form:"id"`
+	IdBranch  int `form:"id_branch"`
+	IdSubSite int `form:"id_sub_site"`
 }
 
 func (r GetOpenArticleRequest) Validate() error {

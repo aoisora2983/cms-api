@@ -3,16 +3,27 @@ package manage
 import (
 	"cms/package/helper"
 	"fmt"
+	"image"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 
+	"github.com/gen2brain/webp"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/xid"
 )
 
 func ImgUpload(c *gin.Context) {
+	var webpQuality = 75
+	var webpMethod = 6
+	var webpExtension = ".webp"
+	var imageExtensions = []string{
+		".png", ".jpg", ".jpeg",
+	}
+
 	file, err := c.FormFile("file")
 
 	if err != nil {
@@ -36,15 +47,43 @@ func ImgUpload(c *gin.Context) {
 	defer src.Close()
 
 	// 拡張子を退避し、一意なIDを生成して保存する
-	extension := filepath.Ext(file.Filename)
-	guid := xid.New().String()
+	extension := strings.ToLower(filepath.Ext(file.Filename))
 
+	if slices.Contains(imageExtensions, extension) {
+		extension = webpExtension
+	}
+
+	guid := xid.New().String()
 	path := fmt.Sprintf("/upload/img/%s", guid+extension)
-	dst, err := os.Create(fmt.Sprintf("%s/upload/img/%s", ProjectRoot(), guid+extension))
+	absPath := fmt.Sprintf("%s%s", ProjectRoot(), path)
+
+	// ※ SVG等他のファイルの場合は圧縮・変換せずに、そのまま保存
+	dst, err := os.Create(absPath)
 	if err != nil {
 		helper.HandleError(c, err, http.StatusBadRequest)
 		return
 	}
+
+	// JPEGやPNGは、デコードしてWebPに変換
+	if extension == webpExtension {
+		img, _, err := image.Decode(src)
+		if err != nil {
+			helper.HandleError(c, err, http.StatusBadRequest)
+			return
+		}
+
+		// Quality: 80 でWebP変換
+		options := webp.Options{
+			Quality:  webpQuality,
+			Method:   webpMethod,
+			Lossless: false,
+		}
+		if err = webp.Encode(dst, img, options); err != nil {
+			helper.HandleError(c, err, http.StatusInternalServerError)
+			return
+		}
+	}
+
 	defer dst.Close()
 
 	if _, err = io.Copy(dst, src); err != nil {
